@@ -21,7 +21,8 @@
 }
 
 .direction-title {
-  display: inline-flex;
+  padding: 100px 0 0px 0;
+  display: flex;
   justify-content: center;
   font-family:'Arial', sans-serif;
   font-size: 40px;
@@ -29,11 +30,11 @@
   color:#cccccc;
 }
 .direction-slider {
-  margin: 264px auto 100px
+  //margin: 264px auto 260px
   }
 .direction-desc {
   width: 100%;
-  margin: 0 auto;
+  margin: 500px auto 0;
 }
 .direction-boxes {
   position: relative;
@@ -90,7 +91,7 @@
   animation: slideIn 1s ease-in-out forwards;
 }
 .slide-left {
-  animation: slideLeft 2.5s ease-in-out forwards;
+  animation: slideLeft 1.5s ease-in-out forwards;
 }
 
 //mouse
