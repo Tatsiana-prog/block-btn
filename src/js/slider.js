@@ -4,16 +4,12 @@ var mouseX = 0;
 var mouseY = 0;
 var mouseZ = 0;
 var addX = 0;
+var isMouseInsideCarousel = false; // флаг для отслеживания, находится ли курсор на карусели
 
-
-// fps counter created by: https://gist.github.com/sharkbrainguy/1156092,
-// no need to create my own :)
+// fps counter
 var fps_counter = {
-  
   tick: function () 
   {
-    // this has to clone the array every tick so that
-    // separate instances won't share state 
     this.times = this.times.concat(+new Date());
     var seconds, times = this.times;
     
@@ -29,80 +25,92 @@ var fps_counter = {
   times: [],
   span: 20
 };
+
 var counter = Object.create(fps_counter);
 
+$(document).ready(init);
 
-
-$(document).ready( init )
-
-function init()
-{
+function init() {
   w = $(window);
-  container = $( '#contentContainer' );
-  carousel = $( '#carouselContainer' );
-  item = $( '.carouselItem' );
-  itemLength = $( '.carouselItem' ).length;
+  container = $('#contentContainer');
+  carousel = $('#carouselContainer');
+  item = $('.carouselItem');
+  itemLength = $('.carouselItem').length;
   fps = $('#fps');
   rY = 360 / itemLength;
-  radius = Math.round( (190) / Math.tan( Math.PI / itemLength ) );
-  
+  radius = Math.round((190) / Math.tan(Math.PI / itemLength));
+
   // set container 3d props
-  TweenMax.set(container, {perspective:600})
-  TweenMax.set(carousel, {z:-(radius)})
-  
+  TweenMax.set(container, {perspective: 600});
+  TweenMax.set(carousel, {z: -(radius)});
+
   // create carousel item props
-  
-  for ( var i = 0; i < itemLength; i++ )
-  {
+  for (var i = 0; i < itemLength; i++) {
     var $item = item.eq(i);
     var $block = $item.find('.carouselItemInner');
     
-    //thanks @chrisgannon!        
-    TweenMax.set($item, {rotationY:rY * i, z:radius, transformOrigin:"50% 50% " + -radius + "px"});
-    
-    animateIn( $item, $block )						
+    // set initial positions
+    TweenMax.set($item, {rotationY: rY * i, z: radius, transformOrigin: "50% 50% " + -radius + "px"});
+    animateIn($item, $block);
   }
-  
+
   // set mouse x and y props and looper ticker
-  window.addEventListener( "mousemove", onMouseMove, false );
-  ticker = setInterval( looper, 1000/60 );			
+  window.addEventListener("mousemove", onMouseMove, false);
+  carousel.on('mouseenter', onMouseEnterCarousel); // мышь вошла на карусель
+  carousel.on('mouseleave', onMouseLeaveCarousel); // мышь покинула карусель
+  ticker = setInterval(looper, 1000 / 60); // обновление каждый 60-й кадр
 }
 
-function animateIn( $item, $block )
-{
+function animateIn($item, $block) {
   var $nrX = 360 * getRandomInt(2);
   var $nrY = 360 * getRandomInt(2);
     
-  var $nx = -(2000) + getRandomInt( 4000 )
-  var $ny = -(2000) + getRandomInt( 4000 )
-  var $nz = -4000 +  getRandomInt( 4000 )
+  var $nx = -(2000) + getRandomInt(4000);
+  var $ny = -(2000) + getRandomInt(4000);
+  var $nz = -4000 + getRandomInt(4000);
     
-  var $s = 1.5 + (getRandomInt( 10 ) * .1)
-  var $d = 1 - (getRandomInt( 8 ) * .1)
+  var $s = 1.5 + (getRandomInt(10) * .1);
+  var $d = 1 - (getRandomInt(8) * .1);
   
-  TweenMax.set( $item, { autoAlpha:1, delay:$d } )	
-  TweenMax.set( $block, { z:$nz, rotationY:$nrY, rotationX:$nrX, x:$nx, y:$ny, autoAlpha:0} )
-  TweenMax.to( $block, $s, { delay:$d, rotationY:0, rotationX:0, z:0,  ease:Expo.easeInOut} )
-  TweenMax.to( $block, $s-.5, { delay:$d, x:0, y:0, autoAlpha:1, ease:Expo.easeInOut} )
+  TweenMax.set($item, { autoAlpha: 1, delay: $d });  
+  TweenMax.set($block, { z: $nz, rotationY: $nrY, rotationX: $nrX, x: $nx, y: $ny, autoAlpha: 0 });
+  TweenMax.to($block, $s, { delay: $d, rotationY: 0, rotationX: 0, z: 0, ease: Expo.easeInOut });
+  TweenMax.to($block, $s - .5, { delay: $d, x: 0, y: 0, autoAlpha: 1, ease: Expo.easeInOut });
 }
 
-function onMouseMove(event)
-{
-  mouseX = -(-(window.innerWidth * .5) + event.pageX) * .0025;
-  mouseY = -(-(window.innerHeight * .5) + event.pageY ) * .01;
-  mouseZ = -(radius) - (Math.abs(-(window.innerHeight * .5) + event.pageY ) - 200);
+function onMouseEnterCarousel() {
+  isMouseInsideCarousel = true; // мышь внутри карусели
+}
+
+function onMouseLeaveCarousel() {
+  isMouseInsideCarousel = false; // мышь покинула карусель
+}
+
+function onMouseMove(event) {
+  // если мышь внутри карусели, обновляем координаты
+  if (isMouseInsideCarousel) {
+    mouseX = -(-(window.innerWidth * .5) + event.pageX) * .0025;
+    mouseY = -(-(window.innerHeight * .5) + event.pageY) * .01;
+    mouseZ = -(radius) - (Math.abs(-(window.innerHeight * .5) + event.pageY) - 200);
+  }
 }
 
 // loops and sets the carousel 3d properties
-function looper()
-{
-  addX += mouseX
-  TweenMax.to( carousel, 1, { rotationY:addX, rotationX:mouseY, ease:Quint.easeOut } )
-  TweenMax.set( carousel, {z:mouseZ } )
-  fps.text( 'Framerate: ' + counter.tick() + '/60 FPS' )	
+function looper() {
+  if (isMouseInsideCarousel) {
+    // накапливаем смещение по оси X, если курсор на карусели
+    addX += mouseX;
+  } else {
+    // продолжаем вращать карусель, если мышь не на ней
+    addX += 0.4; // настройте скорость вращения, если мышь не на карусели
+  }
+
+  // применяем изменения
+  TweenMax.to(carousel, 1, {rotationY: addX, rotationX: mouseY, ease: Quint.easeOut});
+  TweenMax.set(carousel, {z: mouseZ});
+  fps.text('Framerate: ' + counter.tick() + '/60 FPS');
 }
 
-function getRandomInt( $n )
-{
-  return Math.floor((Math.random()*$n)+1);	
+function getRandomInt($n) {
+  return Math.floor((Math.random() * $n) + 1);
 }
